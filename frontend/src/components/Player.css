@@ -30,8 +30,8 @@
 
 .cover-image {
   flex-shrink: 0;
-  width: 100px;
-  height: 100px;
+  width: 140px;
+  height: 140px;
   border: 3px solid var(--border-color);
   background: #2a2a4e;
   overflow: hidden;
@@ -82,6 +82,11 @@
   font-size: 10px;
   color: var(--text-secondary);
 }
+.track-remaining {
+  font-size: 10px;
+  color: var(--accent-green);
+  text-shadow: 0 0 6px rgba(0,255,247,0.6);
+}
 
 /* Controls */
 .controls {
@@ -128,7 +133,21 @@
   box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
 }
 
-/* Visualizer (canvas-based) */
+.visualizer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 120px;
+  margin-bottom: 20px;
+  padding: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 2px solid var(--border-color);
+}
+.visualizer canvas {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
 .visualizer {
   display: flex;
   justify-content: center;

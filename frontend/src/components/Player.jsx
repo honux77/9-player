@@ -12,9 +12,20 @@ export function Player({
   onPrev,
   onStop,
   onSelectTrack,
-  frequencyData
+  frequencyData,
+  remaining
 }) {
   const canvasRef = useRef(null)
+  // format remaining time helper for display in UI
+  const formatTime = (sec) => {
+    if (sec == null || Number.isNaN(sec)) return '0:00'
+    const s = Math.max(0, Math.floor(sec))
+    const m = Math.floor(s / 60)
+    const r = s % 60
+    return `${m}:${r.toString().padStart(2, '0')}`
+  }
+  const remainingText = remaining != null ? `Remaining ${formatTime(remaining)}` : null
+
   // Draw frequency spectrum on canvas when frequencyData updates
   useEffect(() => {
     const canvas = canvasRef.current
@@ -34,6 +45,7 @@ export function Player({
       ctx.fillRect(x + 2, y, barW - 4, barH)
     }
   }, [frequencyData])
+
   return (
     <div className="player-container">
       {/* Now Playing */}
@@ -51,6 +63,7 @@ export function Player({
               {trackInfo.game && <div className="track-game">{trackInfo.game}</div>}
               {trackInfo.system && <div className="track-system">{trackInfo.system}</div>}
               <div className="track-length">{trackInfo.length}</div>
+              {remainingText && <div className="track-remaining" style={{marginTop:4}}>{remainingText}</div>}
             </div>
           ) : (
             <div className="track-info">
