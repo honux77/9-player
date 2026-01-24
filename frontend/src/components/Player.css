@@ -128,32 +128,16 @@
   box-shadow: 0 0 10px rgba(255, 0, 255, 0.3);
 }
 
-/* Visualizer */
+/* Visualizer (canvas-based) */
 .visualizer {
   display: flex;
   justify-content: center;
-  align-items: flex-end;
-  gap: 4px;
-  height: 40px;
+  align-items: center;
+  height: 120px;
   margin-bottom: 20px;
   padding: 8px;
   background: rgba(0, 0, 0, 0.3);
   border: 2px solid var(--border-color);
-}
-
-.visualizer-bar {
-  width: 8px;
-  background: linear-gradient(180deg, var(--accent-cyan) 0%, var(--accent-green) 100%);
-  transition: height 0.1s;
-}
-
-.visualizer-bar.active {
-  animation: visualize 0.5s ease-in-out infinite alternate;
-}
-
-@keyframes visualize {
-  0% { height: 4px; }
-  100% { height: 32px; }
 }
 
 /* Track List */

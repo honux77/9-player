@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react'
 import './Player.css'
 
 export function Player({
@@ -10,8 +11,29 @@ export function Player({
   onNext,
   onPrev,
   onStop,
-  onSelectTrack
+  onSelectTrack,
+  frequencyData
 }) {
+  const canvasRef = useRef(null)
+  // Draw frequency spectrum on canvas when frequencyData updates
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas || !frequencyData) return
+    const ctx = canvas.getContext('2d')
+    const w = canvas.width
+    const h = canvas.height
+    ctx.clearRect(0, 0, w, h)
+    const bars = frequencyData.length
+    const barW = w / bars
+    for (let i = 0; i < bars; i++) {
+      const v = frequencyData[i] ?? 0
+      const barH = (v / 255) * (h - 4)
+      const x = i * barW
+      const y = h - barH
+      ctx.fillStyle = '#00e5ff'
+      ctx.fillRect(x + 2, y, barW - 4, barH)
+    }
+  }, [frequencyData])
   return (
     <div className="player-container">
       {/* Now Playing */}
@@ -54,18 +76,9 @@ export function Player({
         </button>
       </div>
 
-      {/* Visualizer */}
+      {/* Visualizer (Canvas-based frequency spectrum) */}
       <div className="visualizer">
-        {[...Array(16)].map((_, i) => (
-          <div
-            key={i}
-            className={`visualizer-bar ${isPlaying ? 'active' : ''}`}
-            style={{
-              animationDelay: `${i * 0.05}s`,
-              height: isPlaying ? undefined : '4px'
-            }}
-          />
-        ))}
+        <canvas ref={canvasRef} width={320} height={110} style={{ width: '100%', height: '100%' }} />
       </div>
 
       {/* Track List */}

@@ -57,6 +57,16 @@ export function useVGMPlayer() {
       sampleRateRef.current = contextRef.current.sampleRate
       nodeRef.current = contextRef.current.createScriptProcessor(16384, 2, 2)
 
+      // Setup analyser for real-time frequency data visualization
+      const analyser = contextRef.current.createAnalyser()
+      // Small FFT to get a decent frequency resolution for visualization
+      analyser.fftSize = 256
+      analyser.smoothingTimeConstant = 0.8
+      analyserRef.current = analyser
+      // Route the script processor through the analyser to destination
+      nodeRef.current.connect(analyser)
+      analyser.connect(contextRef.current.destination)
+
       const Module = window.Module
       functionsRef.current = {
         VGMPlay_Init: Module.cwrap('VGMPlay_Init'),
@@ -87,6 +97,40 @@ export function useVGMPlayer() {
       console.error('Failed to init player:', e)
     }
   }, [])
+
+  // Frequency data loop: sample frequency data from the analyser and map it to 16 bins
+  useEffect(() => {
+    if (!analyserRef.current || !isReady) return
+    let rafId = null
+    const freqUint8 = new Uint8Array(analyserRef.current.frequencyBinCount)
+
+    const tick = () => {
+      try {
+        analyserRef.current.getByteFrequencyData(freqUint8)
+        // Downsample to 16 bins
+        const bins = 16
+        const binSize = Math.max(1, Math.floor(freqUint8.length / bins))
+        const next = []
+        for (let i = 0; i < bins; i++) {
+          let sum = 0
+          const start = i * binSize
+          for (let j = 0; j < binSize; j++) {
+            const idx = start + j
+            if (idx < freqUint8.length) sum += freqUint8[idx]
+          }
+          next[i] = Math.round(sum / binSize)
+        }
+        setFrequencyData(next)
+      } catch (_) {
+        // ignore
+      }
+      rafId = requestAnimationFrame(tick)
+    }
+    rafId = requestAnimationFrame(tick)
+    return () => {
+      if (rafId) cancelAnimationFrame(rafId)
+    }
+  }, [isReady])
 
   const loadZip = useCallback(async (url) => {
     if (!isReady) return
@@ -210,6 +254,17 @@ export function useVGMPlayer() {
     contextRef.current = new AudioContext()
     nodeRef.current = contextRef.current.createScriptProcessor(16384, 2, 2)
 
+    // Setup or recreate analyser in the current context for visualization
+    if (analyserRef.current) {
+      try {
+        analyserRef.current.disconnect()
+      } catch (e) {}
+    }
+    const newAnalyser = contextRef.current.createAnalyser()
+    newAnalyser.fftSize = 256
+    newAnalyser.smoothingTimeConstant = 0.8
+    analyserRef.current = newAnalyser
+
     // Clear buffers
     buffersRef.current[0] = new Array(16384).fill(0)
     buffersRef.current[1] = new Array(16384).fill(0)
@@ -238,6 +293,17 @@ export function useVGMPlayer() {
     // Generate initial buffer
     generateBuffer()
 
+    // Wire up the audio graph: ScriptProcessor -> Analyser -> Destination
+    try {
+      nodeRef.current.disconnect()
+    } catch (e) {}
+    if (analyserRef.current) {
+      nodeRef.current.connect(analyserRef.current)
+      analyserRef.current.connect(contextRef.current.destination)
+    } else {
+      nodeRef.current.connect(contextRef.current.destination)
+    }
+
     nodeRef.current.onaudioprocess = (e) => {
       const output0 = e.outputBuffer.getChannelData(0)
       const output1 = e.outputBuffer.getChannelData(1)
@@ -255,7 +321,13 @@ export function useVGMPlayer() {
       generateBuffer()
     }
 
-    nodeRef.current.connect(contextRef.current.destination)
+    // Route through analyser for visualization purposes
+    if (analyserRef.current) {
+      nodeRef.current.connect(analyserRef.current)
+      analyserRef.current.connect(contextRef.current.destination)
+    } else {
+      nodeRef.current.connect(contextRef.current.destination)
+    }
     isGeneratingRef.current = true
     setIsPlaying(true)
   }, [isReady, trackList, currentTrackIndex, generateBuffer])
@@ -316,6 +388,7 @@ export function useVGMPlayer() {
     currentTrackIndex,
     trackList,
     trackInfo,
+    frequencyData,
     loadZip,
     play,
     pause,

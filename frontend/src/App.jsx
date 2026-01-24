@@ -230,6 +230,7 @@ function App() {
                 onPrev={player.prevTrack}
                 onStop={player.stop}
                 onSelectTrack={player.play}
+                frequencyData={player.frequencyData}
               />
             )}
           </>
