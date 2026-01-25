@@ -16,6 +16,7 @@ export function Player({
   remaining
 }) {
   const canvasRef = useRef(null)
+  const overlayCanvasRef = useRef(null)
   const [isImageExpanded, setIsImageExpanded] = useState(false)
   const [expandedImageSize, setExpandedImageSize] = useState({ width: 0, height: 0 })
 
@@ -45,22 +46,28 @@ export function Player({
 
   // Draw frequency spectrum on canvas when frequencyData updates
   useEffect(() => {
-    const canvas = canvasRef.current
-    if (!canvas || !frequencyData) return
-    const ctx = canvas.getContext('2d')
-    const w = canvas.width
-    const h = canvas.height
-    ctx.clearRect(0, 0, w, h)
-    const bars = frequencyData.length
-    const barW = w / bars
-    for (let i = 0; i < bars; i++) {
-      const v = frequencyData[i] ?? 0
-      const barH = (v / 255) * (h - 4)
-      const x = i * barW
-      const y = h - barH
-      ctx.fillStyle = '#00e5ff'
-      ctx.fillRect(x + 2, y, barW - 4, barH)
+    if (!frequencyData) return
+
+    const drawSpectrum = (canvas) => {
+      if (!canvas) return
+      const ctx = canvas.getContext('2d')
+      const w = canvas.width
+      const h = canvas.height
+      ctx.clearRect(0, 0, w, h)
+      const bars = frequencyData.length
+      const barW = w / bars
+      for (let i = 0; i < bars; i++) {
+        const v = frequencyData[i] ?? 0
+        const barH = (v / 255) * (h - 4)
+        const x = i * barW
+        const y = h - barH
+        ctx.fillStyle = '#00e5ff'
+        ctx.fillRect(x + 2, y, barW - 4, barH)
+      }
     }
+
+    drawSpectrum(canvasRef.current)
+    drawSpectrum(overlayCanvasRef.current)
   }, [frequencyData])
 
   return (
@@ -68,15 +75,28 @@ export function Player({
       {/* Expanded Image Overlay */}
       {isImageExpanded && coverImage && (
         <div className="image-overlay" onClick={() => setIsImageExpanded(false)}>
-          <img
-            src={`/dist/${coverImage}`}
-            alt="Cover Expanded"
-            onLoad={handleImageLoad}
-            style={expandedImageSize.width ? {
-              width: expandedImageSize.width,
-              height: expandedImageSize.height
-            } : {}}
-          />
+          <div className="expanded-image-wrapper" style={expandedImageSize.width ? {
+            width: expandedImageSize.width,
+            height: expandedImageSize.height
+          } : {}}>
+            <img
+              src={`/dist/${coverImage}`}
+              alt="Cover Expanded"
+              onLoad={handleImageLoad}
+            />
+            {trackInfo && (
+              <div className="overlay-track-info">
+                <div className="overlay-title">{trackInfo.title}</div>
+                {trackInfo.game && <div className="overlay-game">{trackInfo.game}</div>}
+                {trackInfo.system && <div className="overlay-system">{trackInfo.system}</div>}
+                <div className="overlay-length">{trackInfo.length}</div>
+                {remainingText && <div className="overlay-remaining">{remainingText}</div>}
+              </div>
+            )}
+            <div className="overlay-visualizer">
+              <canvas ref={overlayCanvasRef} width={512} height={80} />
+            </div>
+          </div>
         </div>
       )}
       {/* Now Playing */}
