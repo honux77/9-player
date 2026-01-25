@@ -75,15 +75,7 @@ export function Player({
       {/* Expanded Image Overlay */}
       {isImageExpanded && coverImage && (
         <div className="image-overlay" onClick={() => setIsImageExpanded(false)}>
-          <div className="expanded-image-wrapper" style={expandedImageSize.width ? {
-            width: expandedImageSize.width,
-            height: expandedImageSize.height
-          } : {}}>
-            <img
-              src={`/dist/${coverImage}`}
-              alt="Cover Expanded"
-              onLoad={handleImageLoad}
-            />
+          <div className="overlay-content">
             {trackInfo && (
               <div className="overlay-track-info">
                 <div className="overlay-title">{trackInfo.title}</div>
@@ -93,6 +85,16 @@ export function Player({
                 {remainingText && <div className="overlay-remaining">{remainingText}</div>}
               </div>
             )}
+            <div className="expanded-image-wrapper" style={expandedImageSize.width ? {
+              width: expandedImageSize.width,
+              height: expandedImageSize.height
+            } : {}}>
+              <img
+                src={`/dist/${coverImage}`}
+                alt="Cover Expanded"
+                onLoad={handleImageLoad}
+              />
+            </div>
             <div className="overlay-visualizer">
               <canvas ref={overlayCanvasRef} width={512} height={80} />
             </div>
