@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './Player.css'
 
 export function Player({
@@ -16,6 +16,23 @@ export function Player({
   remaining
 }) {
   const canvasRef = useRef(null)
+  const [isImageExpanded, setIsImageExpanded] = useState(false)
+  const [expandedImageSize, setExpandedImageSize] = useState({ width: 0, height: 0 })
+
+  // Calculate image size to fit screen while maintaining aspect ratio
+  const handleImageLoad = (e) => {
+    const img = e.target
+    const naturalWidth = img.naturalWidth
+    const naturalHeight = img.naturalHeight
+    const maxWidth = window.innerWidth * 0.9
+    const maxHeight = window.innerHeight * 0.9
+    const scale = Math.min(maxWidth / naturalWidth, maxHeight / naturalHeight)
+    setExpandedImageSize({
+      width: naturalWidth * scale,
+      height: naturalHeight * scale
+    })
+  }
+
   // format remaining time helper for display in UI
   const formatTime = (sec) => {
     if (sec == null || Number.isNaN(sec)) return '0:00'
@@ -48,12 +65,26 @@ export function Player({
 
   return (
     <div className="player-container">
+      {/* Expanded Image Overlay */}
+      {isImageExpanded && coverImage && (
+        <div className="image-overlay" onClick={() => setIsImageExpanded(false)}>
+          <img
+            src={`/dist/${coverImage}`}
+            alt="Cover Expanded"
+            onLoad={handleImageLoad}
+            style={expandedImageSize.width ? {
+              width: expandedImageSize.width,
+              height: expandedImageSize.height
+            } : {}}
+          />
+        </div>
+      )}
       {/* Now Playing */}
       <div className="now-playing">
         <div className="now-playing-label">NOW PLAYING</div>
         <div className="now-playing-content">
           {coverImage && (
-            <div className="cover-image">
+            <div className="cover-image" onClick={() => setIsImageExpanded(true)}>
               <img src={`/dist/${coverImage}`} alt="Cover" />
             </div>
           )}
